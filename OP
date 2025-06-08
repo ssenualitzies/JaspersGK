@@ -1,0 +1,370 @@
+--// Services
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local SoundService = game:GetService("SoundService")
+
+--// Player
+local player = Players.LocalPlayer
+
+--// Main GUI
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Name = "Jaspers Grapple Kill UI"
+gui.DisplayOrder = 999
+gui.Parent = game:GetService("CoreGui")
+
+--// Themes with icons and text colors (updated)
+local themes = {
+	PinkWhite = {
+		Background = Color3.fromRGB(255, 220, 240),
+		Header = Color3.fromRGB(255, 160, 200),
+		Button = Color3.fromRGB(255, 190, 220),
+		ButtonHover = Color3.fromRGB(255, 170, 200),
+		ButtonOn = Color3.fromRGB(255, 140, 180),
+		TextColor = Color3.fromRGB(80, 20, 50),
+		Icon = "💖",
+	},
+	LightBlueWhite = {
+		Background = Color3.fromRGB(235, 235, 255),
+		Header = Color3.fromRGB(150, 200, 255),
+		Button = Color3.fromRGB(200, 220, 255),
+		ButtonHover = Color3.fromRGB(170, 210, 255),
+		ButtonOn = Color3.fromRGB(100, 180, 255),
+		TextColor = Color3.fromRGB(30, 30, 60),
+		Icon = "❄️",
+	},
+	GreenWhite = {
+		Background = Color3.fromRGB(230, 255, 230),
+		Header = Color3.fromRGB(160, 210, 160),
+		Button = Color3.fromRGB(190, 240, 190),
+		ButtonHover = Color3.fromRGB(170, 220, 170),
+		ButtonOn = Color3.fromRGB(130, 210, 130),
+		TextColor = Color3.fromRGB(40, 80, 40),
+		Icon = "🟢",
+	},
+	MaroonWhite = {
+		Background = Color3.fromRGB(80, 20, 20),
+		Header = Color3.fromRGB(130, 30, 30),
+		Button = Color3.fromRGB(100, 40, 40),
+		ButtonHover = Color3.fromRGB(170, 50, 50),
+		ButtonOn = Color3.fromRGB(200, 60, 60),
+		TextColor = Color3.fromRGB(255, 255, 255),
+		Icon = "❤️",
+	},
+	BlackWhite = {
+		Background = Color3.fromRGB(0, 0, 0),
+		Header = Color3.fromRGB(230, 230, 230),
+		Button = Color3.fromRGB(50, 50, 50),
+		ButtonHover = Color3.fromRGB(180, 180, 180),
+		ButtonOn = Color3.fromRGB(255, 255, 255),
+		TextColor = Color3.fromRGB(255, 255, 255),
+		Icon = "⚪",
+	},
+	OrangeWhite = {
+		Background = Color3.fromRGB(255, 230, 200),
+		Header = Color3.fromRGB(255, 180, 120),
+		Button = Color3.fromRGB(255, 200, 140),
+		ButtonHover = Color3.fromRGB(255, 170, 100),
+		ButtonOn = Color3.fromRGB(255, 140, 70),
+		TextColor = Color3.fromRGB(80, 40, 0),
+		Icon = "🟠",
+	},
+	YellowWhite = {
+		Background = Color3.fromRGB(255, 255, 210),
+		Header = Color3.fromRGB(255, 230, 120),
+		Button = Color3.fromRGB(255, 245, 170),
+		ButtonHover = Color3.fromRGB(255, 240, 140),
+		ButtonOn = Color3.fromRGB(255, 210, 70),
+		TextColor = Color3.fromRGB(60, 60, 0),
+		Icon = "🌟",
+	},
+	PurpleBlack = {
+		Background = Color3.fromRGB(30, 0, 40),
+		Header = Color3.fromRGB(110, 30, 130),
+		Button = Color3.fromRGB(80, 20, 100),
+		ButtonHover = Color3.fromRGB(120, 50, 150),
+		ButtonOn = Color3.fromRGB(180, 100, 220),
+		TextColor = Color3.fromRGB(230, 210, 255),
+		Icon = "🟣",
+	},
+}
+
+-- Current theme state
+local themeNames = {}
+for name in pairs(themes) do table.insert(themeNames, name) end
+local currentThemeIndex = 1
+local currentTheme = themeNames[currentThemeIndex]
+
+local function getCurrentTheme()
+	return themes[currentTheme]
+end
+
+--// Click Sound (light satisfying mouse click)
+local toggleSound = Instance.new("Sound")
+toggleSound.SoundId = "rbxassetid://9118823106"
+toggleSound.Volume = 0.5
+toggleSound.Parent = SoundService
+
+--// Main Frame (smaller size and repositioned)
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 210) -- smaller frame size
+frame.Position = UDim2.new(1, -220, 0, 80) -- repositioned to fit
+frame.BackgroundColor3 = getCurrentTheme().Background
+frame.BorderSizePixel = 0
+frame.BackgroundTransparency = 0.05
+frame.ClipsDescendants = true
+frame.Parent = gui
+frame.AnchorPoint = Vector2.new(1, 0)
+frame.Active = true
+frame.Draggable = true
+
+local uicorner = Instance.new("UICorner")
+uicorner.CornerRadius = UDim.new(0, 12)
+uicorner.Parent = frame
+
+local shadow = Instance.new("ImageLabel")
+shadow.Size = UDim2.new(1, 0, 1, 0)
+shadow.Position = UDim2.new(0, 0, 0, 0)
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://1316045217"
+shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+shadow.ImageTransparency = 0.7
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+shadow.ZIndex = 0
+shadow.Parent = frame
+
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 24) -- smaller header height
+header.BackgroundColor3 = getCurrentTheme().Header
+header.BorderSizePixel = 0
+header.Parent = frame
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 12)
+headerCorner.Parent = header
+
+local title = Instance.new("TextLabel")
+title.Text = "Jaspers Grapple Kill"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14 -- smaller text size
+title.TextColor3 = getCurrentTheme().TextColor
+title.BackgroundTransparency = 1
+title.Size = UDim2.new(1, 0, 1, 0)
+title.Parent = header
+
+local container = Instance.new("Frame")
+container.Position = UDim2.new(0, 0, 0, 30)
+container.Size = UDim2.new(1, 0, 1, -30)
+container.BackgroundTransparency = 1
+container.Parent = frame
+
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0, 6)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Top
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Parent = container
+
+-- Theme switch button
+local themeSwitcher = Instance.new("TextButton")
+themeSwitcher.Size = UDim2.new(0.9, 0, 0, 26)
+themeSwitcher.BackgroundColor3 = getCurrentTheme().Button
+themeSwitcher.Text = getCurrentTheme().Icon .. " Theme: " .. currentTheme
+themeSwitcher.TextColor3 = getCurrentTheme().TextColor
+themeSwitcher.Font = Enum.Font.Gotham
+themeSwitcher.TextSize = 14
+themeSwitcher.AutoButtonColor = false
+themeSwitcher.Parent = container
+
+local themeSwitcherCorner = Instance.new("UICorner")
+themeSwitcherCorner.CornerRadius = UDim.new(0, 8)
+themeSwitcherCorner.Parent = themeSwitcher
+
+local function updateUITheme(newTheme)
+	-- Animate color transitions
+	TweenService:Create(frame, TweenInfo.new(0.5), {BackgroundColor3 = newTheme.Background}):Play()
+	TweenService:Create(header, TweenInfo.new(0.5), {BackgroundColor3 = newTheme.Header}):Play()
+	TweenService:Create(themeSwitcher, TweenInfo.new(0.5), {BackgroundColor3 = newTheme.Button}):Play()
+	TweenService:Create(title, TweenInfo.new(0.5), {TextColor3 = newTheme.TextColor}):Play()
+	-- Animate buttons
+	for _, child in pairs(container:GetChildren()) do
+		if child:IsA("TextButton") and child ~= themeSwitcher then
+			local bgColor = child.Text:find("ON") and newTheme.ButtonOn or newTheme.Button
+			TweenService:Create(child, TweenInfo.new(0.5), {BackgroundColor3 = bgColor, TextColor3 = newTheme.TextColor}):Play()
+		end
+	end
+	themeSwitcher.Text = newTheme.Icon .. " Theme: " .. currentTheme
+end
+
+themeSwitcher.MouseEnter:Connect(function()
+	TweenService:Create(themeSwitcher, TweenInfo.new(0.2), {BackgroundColor3 = getCurrentTheme().ButtonHover}):Play()
+end)
+themeSwitcher.MouseLeave:Connect(function()
+	TweenService:Create(themeSwitcher, TweenInfo.new(0.2), {BackgroundColor3 = getCurrentTheme().Button}):Play()
+end)
+
+themeSwitcher.MouseButton1Click:Connect(function()
+	toggleSound:Play()
+	currentThemeIndex = currentThemeIndex + 1
+	if currentThemeIndex > #themeNames then currentThemeIndex = 1 end
+	currentTheme = themeNames[currentThemeIndex]
+	updateUITheme(getCurrentTheme())
+end)
+
+-- Feature logic (damage part and toggles)
+
+local damagePart = workspace:FindFirstChild("Pit") and workspace.Pit:FindFirstChild("Damage")
+local damageEnabled = false
+local damageTouchedConnection
+
+local function enableDamage()
+	if not damagePart then warn("Damage part not found.") return end
+	local character = player.Character or player.CharacterAdded:Wait()
+	local root = character:WaitForChild("HumanoidRootPart")
+	damagePart.CFrame = root.CFrame
+	damagePart.Size = Vector3.new(9999999, 9999999, 9999999)
+	if not damageTouchedConnection then
+		damageTouchedConnection = damagePart.Touched:Connect(function(hit)
+			if hit.Parent and hit.Parent:FindFirstChild("Humanoid") then
+				hit.Parent.Humanoid.Health = 0
+			end
+		end)
+	end
+	damageEnabled = true
+end
+
+local function disableDamage()
+	if damagePart then
+		damagePart.Size = Vector3.new(10, 10, 10)
+		damagePart.Position = Vector3.new(0, -5000, 0)
+	end
+	if damageTouchedConnection then
+		damageTouchedConnection:Disconnect()
+		damageTouchedConnection = nil
+	end
+	damageEnabled = false
+end
+
+disableDamage()
+
+-- Toggle buttons setup
+local toggleButtons = {}
+
+local function createToggleButton(text, toggleCallback)
+	local isEnabled = false
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.9, 0, 0, 22)
+	btn.BackgroundColor3 = getCurrentTheme().Button
+	btn.Text = text .. ": OFF"
+	btn.TextColor3 = getCurrentTheme().TextColor
+	btn.Font = Enum.Font.Gotham
+	btn.TextSize = 12
+	btn.AutoButtonColor = false
+	btn.Parent = container
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = btn
+
+	btn.MouseEnter:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = isEnabled and getCurrentTheme().ButtonOn or getCurrentTheme().ButtonHover}):Play()
+	end)
+	btn.MouseLeave:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = isEnabled and getCurrentTheme().ButtonOn or getCurrentTheme().Button}):Play()
+	end)
+
+	btn.MouseButton1Click:Connect(function()
+		toggleSound:Play()
+		isEnabled = not isEnabled
+		btn.Text = text .. ": " .. (isEnabled and "ON" or "OFF")
+		TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = isEnabled and getCurrentTheme().ButtonOn or getCurrentTheme().Button}):Play()
+		toggleCallback(isEnabled)
+	end)
+
+	local function updateState(state)
+		isEnabled = state
+		btn.Text = text .. ": " .. (state and "ON" or "OFF")
+		TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = state and getCurrentTheme().ButtonOn or getCurrentTheme().Button}):Play()
+		toggleCallback(state)
+	end
+
+	toggleButtons[text] = updateState
+
+	return btn, updateState
+end
+
+-- Define toggle buttons
+local updateDamageToggle
+_, updateDamageToggle = createToggleButton("Kill Touch", function(isOn)
+	if isOn then enableDamage() else disableDamage() end
+end)
+
+createToggleButton("Toggle Touch", function(isOn)
+	for _, v in pairs(player.Character:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.CanCollide = not isOn
+			v.CanTouch = not isOn
+		end
+	end
+end)
+
+createToggleButton("Anti Ragdoll", function(isOn)
+	local char = player.Character
+	if isOn and char and char:FindFirstChild("ragdollValue") then
+		char.ragdollValue:Destroy()
+	end
+end)
+
+createToggleButton("Jump Boost", function(isOn)
+	local jump = workspace.Map.Cool.Boosts.Jump.touchDetector
+	if jump then
+		jump.Size = isOn and Vector3.new(400000, 400000, 400000) or Vector3.new(1, 1, 1)
+	end
+end)
+
+createToggleButton("Speed Boost", function(isOn)
+	local speed = workspace.Map.Cool.Boosts.Speed.touchDetector
+	if speed then
+		speed.Size = isOn and Vector3.new(400000, 400000, 400000) or Vector3.new(1, 1, 1)
+	end
+end)
+
+-- F/V key hold toggle
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then return end
+	if input.KeyCode == Enum.KeyCode.F or input.KeyCode == Enum.KeyCode.V then
+		if not damageEnabled then
+			updateDamageToggle(true)
+		end
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input, processed)
+	if processed then return end
+	if input.KeyCode == Enum.KeyCode.F or input.KeyCode == Enum.KeyCode.V then
+		if damageEnabled then
+			updateDamageToggle(false)
+		end
+	end
+end)
+
+-- Reset on death/respawn
+local function resetAllToggles()
+	for _, updater in pairs(toggleButtons) do
+		updater(false)
+	end
+end
+
+local function onCharacterAdded(character)
+	local humanoid = character:WaitForChild("Humanoid")
+	resetAllToggles()
+	humanoid.Died:Connect(resetAllToggles)
+end
+
+if player.Character then
+	onCharacterAdded(player.Character)
+end
+player.CharacterAdded:Connect(onCharacterAdded)
